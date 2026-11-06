@@ -1,5 +1,13 @@
 # Build log
 
+## 2026-11-06: a video for the web page
+
+- A 69-second narrated video on the page (`site/assets/recap.mp4`), made the same way as EyeCue's: the app's real
+  screens drawn offscreen (`Recap --render-frames`, new), a slide kit, narration and quiet music. It shows the start
+  screen, lines arriving, search and playback, exports, privacy, updates and the install steps. The narration was
+  checked by transcribing it with Recap itself.
+- Fixed while making it: the highlight on the playing line now spans the whole row, not just the text.
+
 ## 2026-11-06: version 0.2.0, in-app updates (the first public release)
 
 - In-app updates with Sparkle 2.10.1 (pinned exactly), set up the same way as EyeCue: Recap > Check for

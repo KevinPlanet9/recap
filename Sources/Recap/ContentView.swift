@@ -320,7 +320,9 @@ final class DropState: ObservableObject {
 }
 
 final class SearchState: ObservableObject {
-    @Published var text = ""
+    /// `--render-frames` only: the search a drawn transcript starts with.
+    static var seedForScreens = ""
+    @Published var text = SearchState.seedForScreens
 }
 
 struct LineRow: View {
@@ -349,6 +351,7 @@ struct LineRow: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 3)
+        .frame(maxWidth: .infinity, alignment: .leading)  // the playing highlight spans the whole row
         .background(playing ? Theme.raised : Color.clear)
     }
 }

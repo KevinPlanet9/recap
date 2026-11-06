@@ -22,6 +22,7 @@ The command line modes never open a window:
 | `Recap --smoke-test` | Exercises the core with no engine |
 | `Recap --launch-check` | Starts as the signed, sandboxed app would, reads its folder, checks the engine, quits |
 | `Recap --render-screens <folder>` | Draws each screen with sample data to PNGs (the README pictures), offscreen |
+| `Recap --render-frames <folder>` | Draws step-by-step frames for the web page video (lines arriving, a search, each line lit as it plays), offscreen |
 | `Recap --update-check` | Packaged app only: reads the update feed through Sparkle's Downloader helper and reports what it found, with no window |
 
 Signed build on this Mac (the certificate goes into a throwaway keychain; the login keychain is never touched):
@@ -46,6 +47,7 @@ security delete-keychain "$KC"
 | Saved transcripts | `Sources/RecapCore/TranscriptStore.swift` |
 | Screens | `Sources/Recap/ContentView.swift`; state in `AppModel.swift` |
 | README pictures | `Recap --render-screens docs` |
+| Web page video | `site/assets/recap.mp4`; its source (narration, scene kit, build script) is kept outside the repo, in the owner's "Recap Video" folder |
 
 SwiftUI state uses `@StateObject` with small `ObservableObject` classes, not the `@State` macro, which
 fails to build with only the Command Line Tools installed.

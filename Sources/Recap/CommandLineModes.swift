@@ -16,6 +16,9 @@ enum CommandLineModes {
         if let folder = value(after: "--render-screens", in: args) {
             return MainActor.assumeIsolated { ScreenRenderer.run(folder: folder) }
         }
+        if let folder = value(after: "--render-frames", in: args) {
+            return MainActor.assumeIsolated { ScreenRenderer.runFrames(folder: folder) }
+        }
         if args.contains("--launch-check") { return blocking { await launchCheck() } }
         if args.contains("--update-check") { return MainActor.assumeIsolated { UpdateCheck.run() } }
         if let i = args.firstIndex(of: "--transcribe") {

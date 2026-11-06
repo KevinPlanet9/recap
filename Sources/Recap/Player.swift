@@ -30,6 +30,13 @@ final class Player: ObservableObject {
         player?.play()
     }
 
+    /// `--render-frames` only: draw a transcript as if it were playing at `time`. Plays nothing.
+    func seedForScreens(id: UUID, time: Double) {
+        transcriptID = id
+        self.time = time
+        isPlaying = true
+    }
+
     func toggle() {
         guard let player else { return }
         if player.rate == 0 { player.play() } else { player.pause() }

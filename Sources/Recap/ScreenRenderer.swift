@@ -50,6 +50,57 @@ enum ScreenRenderer {
         return 0
     }
 
+    /// `Recap --render-frames <folder>` draws step-by-step frames for the web page video, offscreen:
+    /// working-00...10 (lines arriving), find-search (a search), and play-0...9 (each line lit as it plays).
+    static func runFrames(folder: String) -> Int32 {
+        _ = NSApplication.shared
+        NSApp.setActivationPolicy(.prohibited)  // nothing on screen
+        let out = URL(fileURLWithPath: folder, isDirectory: true)
+        try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+        let sample = sampleTranscript()
+        let older = Transcript(title: "Safety stand-down", sourceName: "Safety stand-down.m4a", bookmark: nil,
+                               locale: "en_US", createdAt: Date(timeIntervalSinceNow: -86400 * 3), duration: 2710, lines: sample.lines)
+        var frames: [(String, AppModel, Player)] = []
+        for k in 0...10 {
+            let m = AppModel()
+            m.seedForScreens(saved: [older], locales: ["en_US"])
+            m.seedJobForScreens(title: "Weekly operations review", fraction: Double(k) / 10 * 0.97,
+                                lines: Array(sample.lines.prefix(k)), waiting: 0)
+            frames.append((String(format: "working-%02d", k), m, Player()))
+        }
+        for (i, line) in sample.lines.enumerated() {
+            let m = AppModel()
+            m.seedForScreens(saved: [sample, older], locales: ["en_US"])
+            m.screen = .transcript(sample.id)
+            let p = Player()
+            p.seedForScreens(id: sample.id, time: line.start + 0.2)
+            frames.append((String(format: "play-%02d", i), m, p))
+        }
+        for (name, m, p) in frames {
+            SearchState.seedForScreens = ""
+            guard write(name, m, p, to: out) else { return 1 }
+        }
+        let m = AppModel()
+        m.seedForScreens(saved: [sample, older], locales: ["en_US"])
+        m.screen = .transcript(sample.id)
+        SearchState.seedForScreens = "training"
+        defer { SearchState.seedForScreens = "" }
+        guard write("find-search", m, Player(), to: out) else { return 1 }
+        print("FRAMES OK \(frames.count + 1) folder=\(out.path)")
+        return 0
+    }
+
+    private static func write(_ name: String, _ model: AppModel, _ player: Player, to out: URL) -> Bool {
+        let view = ContentView().environmentObject(model).environmentObject(player)
+            .frame(width: 1100, height: 700).preferredColorScheme(.dark)
+        guard let png = snapshot(view, size: NSSize(width: 1100, height: 700)),
+              (try? png.write(to: out.appendingPathComponent("\(name).png"))) != nil else {
+            FileHandle.standardError.write(Data("Couldn't draw \(name)\n".utf8))
+            return false
+        }
+        return true
+    }
+
     private static func snapshot<V: View>(_ view: V, size: NSSize) -> Data? {
         let host = NSHostingView(rootView: view)
         host.frame = NSRect(origin: .zero, size: size)
