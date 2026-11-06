@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # SpeechAnalyzer needs the macOS 26 SDK or later.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: swift --version
+      - name: Unit tests, no-network check, smoke test
+        run: scripts/test.sh
+      - name: Build the signed app bundle (checks the signed entitlements)
+        run: scripts/build-app.sh
+      - name: Launch check (sandboxed app starts, reads its folder, quits)
+        run: build/Recap.app/Contents/MacOS/Recap --launch-check

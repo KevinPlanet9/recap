@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The App Sandbox with no network entitlement: macOS itself blocks network access. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- Read the recordings you choose, and write the exports you save. Nothing else on the Mac. -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+	<!-- Remember where a recording is, so a click on a time can play it later. -->
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
+</dict>
+</plist>
