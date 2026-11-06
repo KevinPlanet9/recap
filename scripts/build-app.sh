@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds build/Recap.app: a sandboxed Mac app with Sparkle for in-app updates, signed with
+# Builds build/Products.noindex/Recap.app: a sandboxed Mac app with Sparkle for in-app updates, signed with
 # SIGN_IDENTITY (the release certificate, from SIGN_KEYCHAIN when set) or ad-hoc when that is not set.
 #   scripts/build-app.sh            build only
 #   scripts/build-app.sh --install  build, then move it to ~/Applications
@@ -16,8 +16,10 @@ if [ "${UNIVERSAL:-}" = "1" ]; then ARCHS=(--arch arm64 --arch x86_64); fi
 swift build -c release ${ARCHS[@]+"${ARCHS[@]}"}
 BIN="$(swift build -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)/Recap"
 
-APP=build/Recap.app
-rm -rf "$APP"
+# Spotlight skips any folder whose name ends in .noindex, so a build never shows up as a second
+# Recap next to the installed one.
+APP=build/Products.noindex/Recap.app
+rm -rf build/Recap.app "$APP"  # build/Recap.app: where older builds went
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Recap"
 sed -e "s/__BUNDLE_ID__/$BUNDLE_ID/" -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD_NUMBER/" \

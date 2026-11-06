@@ -22,4 +22,4 @@ jobs:
       - name: Build the signed app bundle (checks the signed entitlements)
         run: scripts/build-app.sh
       - name: Launch check (sandboxed app starts, reads its folder, quits)
-        run: build/Recap.app/Contents/MacOS/Recap --launch-check
+        run: build/Products.noindex/Recap.app/Contents/MacOS/Recap --launch-check

@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 VERSION="${VERSION:-0.1.0}"
 UNIVERSAL=1 VERSION="$VERSION" scripts/build-app.sh
-APP="build/Recap.app"
+APP="build/Products.noindex/Recap.app"
 lipo -archs "$APP/Contents/MacOS/Recap" | grep -q x86_64
 lipo -archs "$APP/Contents/MacOS/Recap" | grep -q arm64
 "$APP/Contents/MacOS/Recap" --launch-check
