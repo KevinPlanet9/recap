@@ -12,7 +12,9 @@ jobs:
     # SpeechAnalyzer needs the macOS 26 SDK or later.
     runs-on: macos-26
     env:
-      SIGN_IDENTITY: KevinPlanet9 App Signing
+      # The release certificate ("KevinPlanet9 App Signing") by its SHA-1 fingerprint, which is public.
+      # A self-signed certificate isn't trusted by the runner, so codesign can't pick it by name there.
+      SIGN_IDENTITY: 3B4A52392612E878F7915ADB04E35A4D7979AD88
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:

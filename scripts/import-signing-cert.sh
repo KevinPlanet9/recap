@@ -18,5 +18,11 @@ security import "$P12" -k "$KEYCHAIN" -P "$PASSWORD" -T /usr/bin/codesign >&2
 security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null 2>&1
 security find-identity -p codesigning "$KEYCHAIN" | grep -q "1 identities found" \
     || { security delete-keychain "$KEYCHAIN"; echo "The certificate didn't import." >&2; exit 1; }
+# On a CI runner, codesign looks for the private key through the keychain search list, so the throwaway
+# keychain goes on it there. On a person's Mac the search list is left alone (codesign finds it via --keychain).
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    # shellcheck disable=SC2046
+    security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"') >&2
+fi
 trap - ERR
 echo "$KEYCHAIN"
