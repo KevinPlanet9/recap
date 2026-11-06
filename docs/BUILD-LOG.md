@@ -18,7 +18,15 @@ First version, built from the plan "Transcription App Handoff".
   files are counted and kept. Times are clamped before any Int conversion.
 - App Sandbox with only user-chosen files and app-scoped bookmarks. CI fails on networking, microphone or
   camera APIs or any other entitlement, and the build checks the signed entitlements.
-- 21 unit tests (times, line building, search, exports, saved and damaged files).
+- 25 unit tests (times, line building, search, exports, saved and damaged files).
+- An independent code review (Codex) before release found one high and five medium problems, all fixed:
+  cancelling a job and starting another right away could let the old job clear the new one (each job now
+  has its own id); a part of the sound that failed to convert was skipped silently (it now fails the job);
+  a transcript that failed to save could become unreachable if the saved list also failed to load (it now
+  always shows); a saved file claiming another file's id could make Delete remove the wrong file, and a
+  huge file could be read into memory at launch (both are now set aside as damaged); Markdown exports
+  didn't escape the title and file name (now they do). Two low ones are fixed too: subtitle markup is
+  escaped, and a moved recording's bookmark is refreshed. Four new tests cover the store and export fixes.
 
 Checked on an M5 MacBook Pro running macOS 27.0.1, from the command line (no window):
 

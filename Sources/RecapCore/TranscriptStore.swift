@@ -23,9 +23,12 @@ public struct TranscriptStore: Sendable {
     }
 
     public let folder: URL
+    public static let defaultMaximumFileBytes = 64 * 1024 * 1024
+    public let maximumFileBytes: Int
 
-    public init(folder: URL) {
+    public init(folder: URL, maximumFileBytes: Int = TranscriptStore.defaultMaximumFileBytes) {
         self.folder = folder
+        self.maximumFileBytes = maximumFileBytes
     }
 
     /// Application Support/Recap/Transcripts. In the sandbox this is inside the app's container.
@@ -56,10 +59,18 @@ public struct TranscriptStore: Sendable {
         }
         var transcripts: [Transcript] = []
         var damaged: [URL] = []
+        var seen = Set<UUID>()
         for file in names where file.pathExtension.lowercased() == "json" {
             do {
+                // A 4 hour transcript is about 1 MB. Anything far larger is damaged; don't read it into memory.
+                let size = (try file.resourceValues(forKeys: [.fileSizeKey])).fileSize ?? 0
+                guard size <= maximumFileBytes else { damaged.append(file); continue }
                 let data = try Data(contentsOf: file)
                 let transcript = try TranscriptStore.decoder.decode(Transcript.self, from: data).sanitized()
+                // The file name is the id. A file whose contents claim another id (or a repeat) is set aside,
+                // so Delete always removes the file that was shown.
+                guard file.deletingPathExtension().lastPathComponent.uppercased() == transcript.id.uuidString,
+                      seen.insert(transcript.id).inserted else { damaged.append(file); continue }
                 transcripts.append(transcript)
             } catch {
                 damaged.append(file)

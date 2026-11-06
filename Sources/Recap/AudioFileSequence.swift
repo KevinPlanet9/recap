@@ -96,6 +96,13 @@ final class AudioFileSequence: AsyncSequence, @unchecked Sendable {
         }
     }
 
+    private func recordFailure(_ why: String) -> Error {
+        let error = ReadError.unreadable(why)
+        lock.withLock { _failure = error }
+        reader.cancelReading()
+        return error
+    }
+
     private func nextInput() throws -> AnalyzerInput? {
         while true {
             guard let sample = output.copyNextSampleBuffer() else {
@@ -106,13 +113,18 @@ final class AudioFileSequence: AsyncSequence, @unchecked Sendable {
                 }
                 return nil
             }
-            let frames = AVAudioFrameCount(CMSampleBufferGetNumSamples(sample))
-            if frames == 0 { continue }
-            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames) else { continue }
+            let count = CMSampleBufferGetNumSamples(sample)
+            if count == 0 { continue }
+            // A gap in the audio must fail the job, never save a transcript with part of it missing.
+            guard count > 0, count <= Int(Int32.max),
+                  let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(count)) else {
+                throw recordFailure("A part of the sound couldn't be read.")
+            }
+            let frames = AVAudioFrameCount(count)
             buffer.frameLength = frames
-            let status = CMSampleBufferCopyPCMDataIntoAudioBufferList(sample, at: 0, frameCount: Int32(frames),
+            let status = CMSampleBufferCopyPCMDataIntoAudioBufferList(sample, at: 0, frameCount: Int32(count),
                                                                       into: buffer.mutableAudioBufferList)
-            guard status == noErr else { continue }
+            guard status == noErr else { throw recordFailure("A part of the sound couldn't be converted (\(status)).") }
             let start = CMSampleBufferGetPresentationTimeStamp(sample)
             let end = start.seconds + Double(frames) / format.sampleRate
             lock.withLock { if end.isFinite { _position = end } }

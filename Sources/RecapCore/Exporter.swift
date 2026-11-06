@@ -25,17 +25,17 @@ public enum Exporter {
         case .txt:
             return t.lines.map { "[\(TimeFormat.display($0.start))] \($0.text)" }.joined(separator: "\n") + "\n"
         case .md:
-            var out = "# \(oneLine(t.title))\n\n"
-            out += "_\(oneLine(t.sourceName)), transcribed \(dateLabel(t.createdAt)). On-device transcript: check names and numbers by ear._\n\n"
+            var out = "# \(markdownSafe(t.title))\n\n"
+            out += "_\(markdownSafe(t.sourceName)), transcribed \(dateLabel(t.createdAt)). On-device transcript: check names and numbers by ear._\n\n"
             out += t.lines.map { "**\(TimeFormat.display($0.start))** \(markdownSafe($0.text))  " }.joined(separator: "\n")
             return out + "\n"
         case .srt:
             return t.lines.enumerated().map { index, line in
-                "\(index + 1)\n\(TimeFormat.srt(line.start)) --> \(TimeFormat.srt(cueEnd(line)))\n\(subtitleText(line.text))\n"
+                "\(index + 1)\n\(TimeFormat.srt(line.start)) --> \(TimeFormat.srt(cueEnd(line)))\n\(srtText(line.text))\n"
             }.joined(separator: "\n")
         case .vtt:
             let cues = t.lines.map { line in
-                "\(TimeFormat.vtt(line.start)) --> \(TimeFormat.vtt(cueEnd(line)))\n\(subtitleText(line.text))\n"
+                "\(TimeFormat.vtt(line.start)) --> \(TimeFormat.vtt(cueEnd(line)))\n\(vttText(line.text))\n"
             }
             return "WEBVTT\n\n" + cues.joined(separator: "\n")
         case .json:
@@ -57,6 +57,18 @@ public enum Exporter {
         return out.isEmpty ? "..." : out
     }
 
+    /// WebVTT cue text: markup characters as entities, so "<b>" or "<00:00:05.000>" shows as typed.
+    public static func vttText(_ text: String) -> String {
+        subtitleText(text).replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;")
+    }
+
+    /// SubRip has no escapes, and many players read "<b>" as formatting, so angle brackets become
+    /// look-alike single guillemets.
+    public static func srtText(_ text: String) -> String {
+        subtitleText(text).replacingOccurrences(of: "<", with: "\u{2039}").replacingOccurrences(of: ">", with: "\u{203A}")
+    }
+
     /// A cue lasts at least a second so very short lines stay readable.
     static func cueEnd(_ line: Line) -> Double { max(line.end, line.start + 1) }
 
@@ -69,6 +81,7 @@ public enum Exporter {
     static func markdownSafe(_ text: String) -> String {
         var out = ""
         for ch in oneLine(text) {
+            // With brackets escaped, no link or image ("![...](...)") can form.
             if "\\`*_[]<>#|".contains(ch) { out.append("\\") }
             out.append(ch)
         }

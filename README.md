@@ -15,8 +15,9 @@ that moment in the recording.
 
 ## What it does
 
-- **On your Mac only.** Apple's speech engine runs on the Mac. Recap has no network access at all:
-  macOS's App Sandbox blocks it. Your recordings are never copied or uploaded.
+- **On your Mac only.** Apple's speech engine runs on the Mac. Recap itself has no network access:
+  macOS's App Sandbox blocks it. Your recordings are never copied or uploaded. (The first time you
+  use a language, macOS downloads its speech model.)
 - **Fast.** On an M5 MacBook Pro, a 4 hour recording takes about 2 minutes.
 - **Every voice.** Meeting and screen recordings often keep you and the other people on separate
   tracks. Recap mixes every sound track, so nobody is left out.

@@ -241,6 +241,15 @@ final class AppModel: ObservableObject {
         return saved.first { $0.id == id }
     }
 
+    /// Saves a refreshed bookmark after the recording moved. Quietly does nothing if saving fails;
+    /// the old bookmark still works until the next move.
+    func updateBookmark(_ id: UUID, _ bookmark: Data) {
+        guard var transcript = saved.first(where: { $0.id == id }) else { return }
+        transcript.bookmark = bookmark
+        guard (try? store?.save(transcript)) != nil else { return }
+        if let i = saved.firstIndex(where: { $0.id == id }) { saved[i] = transcript }
+    }
+
     // MARK: Delete, copy, export
 
     func askToDelete(_ transcript: Transcript) { present(.confirmDelete(transcript)) }

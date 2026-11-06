@@ -126,7 +126,7 @@ private func transcript(_ lines: [Line] = sample) -> Transcript {
     let bad = [Line(id: 0, start: 0, end: 1, text: "a --> b\n\nc ---> d"), Line(id: 1, start: 1, end: 2, text: "\n")]
     let srt = try Exporter.render(transcript(bad), as: .srt)
     #expect(!srt.contains("a -->"))
-    #expect(srt.contains("a -> b c -> d"))
+    #expect(srt.contains("a -\u{203A} b c -\u{203A} d"))  // arrows defused, then ">" made harmless
     #expect(srt.components(separatedBy: "-->").count - 1 == 2)  // only the two timing lines
     let vtt = try Exporter.render(transcript(bad), as: .vtt)
     #expect(!vtt.contains("\n\n\n"))
@@ -204,6 +204,54 @@ private func tempFolder() -> URL {
     try Data("x".utf8).write(to: file)
     defer { try? FileManager.default.removeItem(at: file) }
     #expect(throws: TranscriptStore.StoreError.self) { try TranscriptStore(folder: file).loadAll() }
+}
+
+@Test func filesWhoseIdDoesNotMatchTheirNameAreSetAside() throws {
+    let store = TranscriptStore(folder: tempFolder())
+    defer { try? FileManager.default.removeItem(at: store.folder) }
+    let a = transcript()
+    var b = transcript(); b.id = UUID()
+    try store.save(a)
+    try store.save(b)
+    // Copy B's contents into a file named for another id: it claims B's identity.
+    let impostor = store.folder.appendingPathComponent(UUID().uuidString + ".json")
+    try FileManager.default.copyItem(at: store.url(for: b.id), to: impostor)
+    let result = try store.loadAll()
+    #expect(Set(result.transcripts.map(\.id)) == [a.id, b.id])
+    #expect(result.damaged.map(\.lastPathComponent) == [impostor.lastPathComponent])
+}
+
+@Test func oversizedFilesAreSetAsideUnread() throws {
+    let folder = tempFolder()
+    defer { try? FileManager.default.removeItem(at: folder) }
+    try TranscriptStore(folder: folder).save(transcript())
+    let big = folder.appendingPathComponent(UUID().uuidString + ".json")
+    try Data(count: 5000).write(to: big)
+    let result = try TranscriptStore(folder: folder, maximumFileBytes: 4000).loadAll()
+    #expect(result.transcripts.count == 1)
+    #expect(result.damaged.map(\.lastPathComponent) == [big.lastPathComponent])
+}
+
+@Test func markdownMetadataCannotFormLinksOrImages() throws {
+    var t = transcript([Line(id: 0, start: 0, end: 1, text: "see [here](https://x.invalid) <b>")])
+    t.title = "![pixel](https://x.invalid/p.png)"
+    t.sourceName = "<img src=x>.m4a"
+    let md = try Exporter.render(t, as: .md)
+    // Every bracket and angle bracket is escaped, so nothing renders as a link, image or HTML.
+    #expect(md.contains("\\!\\[pixel\\](https://x.invalid/p.png)") || md.contains("!\\[pixel\\](https://x.invalid/p.png)"))
+    #expect(md.contains("\\<img src=x\\>"))
+    #expect(md.contains("\\[here\\](https://x.invalid)"))
+    #expect(md.contains("\\<b\\>"))
+    #expect(!md.contains("[pixel]("))
+    #expect(!md.contains("[here]("))
+}
+
+@Test func subtitleMarkupShowsAsTyped() throws {
+    let t = transcript([Line(id: 0, start: 0, end: 1, text: "<b>bold</b> & <00:00:05.000>")])
+    let vtt = try Exporter.render(t, as: .vtt)
+    #expect(vtt.contains("&lt;b&gt;bold&lt;/b&gt; &amp; &lt;00:00:05.000&gt;"))
+    let srt = try Exporter.render(t, as: .srt)
+    #expect(!srt.contains("<b>"))
 }
 
 @Test func titlesComeFromFileNames() {

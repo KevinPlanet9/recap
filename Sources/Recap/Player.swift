@@ -17,6 +17,8 @@ final class Player: ObservableObject {
     private var statusWatch: AnyCancellable?
     private var rateWatch: AnyCancellable?
     private var scopedURL: URL?
+    /// Called with a fresh bookmark when the saved one is stale (the recording moved), so it can be saved.
+    var onBookmarkRefresh: ((UUID, Data) -> Void)?
 
     func play(_ transcript: Transcript, from seconds: Double) {
         problem = nil
@@ -59,7 +61,15 @@ final class Player: ObservableObject {
             problem = "The recording has moved or been deleted, so it can't be played."
             return false
         }
+        guard url.isFileURL else {
+            problem = "Recap can only play files on this Mac."
+            return false
+        }
         if url.startAccessingSecurityScopedResource() { scopedURL = url }
+        if stale, let fresh = try? url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess],
+                                                     includingResourceValuesForKeys: nil, relativeTo: nil) {
+            onBookmarkRefresh?(transcript.id, fresh)
+        }
         guard FileManager.default.isReadableFile(atPath: url.path) else {
             problem = "The recording has moved or been deleted, so it can't be played."
             scopedURL?.stopAccessingSecurityScopedResource()

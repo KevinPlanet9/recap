@@ -58,6 +58,9 @@ struct Sidebar: View {
                 .padding(.top, 18)
                 .padding(.bottom, 6)
 
+            if let unsaved = model.unsaved, model.loadError != nil {
+                row(unsaved, note: "Not saved").padding(.horizontal, 10)
+            }
             if let error = model.loadError {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(error).font(Theme.font(12)).foregroundColor(Theme.danger).fixedSize(horizontal: false, vertical: true)

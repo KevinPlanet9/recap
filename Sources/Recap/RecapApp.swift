@@ -13,7 +13,10 @@ struct RecapApp: App {
                 .environmentObject(player)
                 .frame(minWidth: 820, minHeight: 540)
                 .preferredColorScheme(.dark)
-                .onAppear { model.start() }
+                .onAppear {
+                    model.start()
+                    player.onBookmarkRefresh = { id, data in model.updateBookmark(id, data) }
+                }
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
