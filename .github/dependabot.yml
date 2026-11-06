@@ -1,4 +1,4 @@
-# Keeps the pinned GitHub Actions up to date, grouped into one monthly pull request. The app has no third-party dependencies.
+# Keeps the pinned GitHub Actions up to date, grouped into one monthly pull request. Sparkle (the one app dependency) is pinned to an exact version in Package.swift and updated by hand.
 version: 2
 updates:
   - package-ecosystem: github-actions

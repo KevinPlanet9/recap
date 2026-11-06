@@ -30,6 +30,24 @@
 	<string>Copyright 2026 Kevin Cheek. MIT License.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<!-- In-app updates (Sparkle). The feed is the newest release's appcast.xml on GitHub; every update
+	     must be signed with the private key matching SUPublicEDKey. -->
+	<key>SUFeedURL</key>
+	<string>https://github.com/KevinPlanet9/recap/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>GC7KohQjf3e3Fx11SHbtUGtZxudSD0UHEVyyv3Sar6A=</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUEnableDownloaderService</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 	<!-- Open With: audio and video files. Recap only reads them; it never changes or copies them. -->
 	<key>CFBundleDocumentTypes</key>
 	<array>

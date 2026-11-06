@@ -1,4 +1,6 @@
-# Push a tag like v0.1.0 to test, build and publish a download on the Releases page.
+# Push a tag like v0.2.0 to test, build, sign and publish a download plus the update feed.
+# Secrets (repository settings): CODESIGN_P12_BASE64 and CODESIGN_P12_PASSWORD (the release
+# certificate), SPARKLE_ED_PRIVATE_KEY (signs updates). They are only read in this workflow.
 name: Release
 on:
   push:
@@ -7,16 +9,37 @@ permissions:
   contents: write
 jobs:
   release:
+    # SpeechAnalyzer needs the macOS 26 SDK or later.
     runs-on: macos-26
+    env:
+      SIGN_IDENTITY: KevinPlanet9 App Signing
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - name: Tests
         run: scripts/test.sh
-      - name: Build the download
+      - name: Import the release certificate into a throwaway keychain
+        env:
+          CODESIGN_P12_BASE64: ${{ secrets.CODESIGN_P12_BASE64 }}
+          CODESIGN_P12_PASSWORD: ${{ secrets.CODESIGN_P12_PASSWORD }}
+        run: |
+          trap 'rm -f "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/cert.pass"' EXIT
+          printf '%s' "$CODESIGN_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          printf '%s' "$CODESIGN_P12_PASSWORD" > "$RUNNER_TEMP/cert.pass"
+          KC=$(scripts/import-signing-cert.sh "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/cert.pass")
+          echo "SIGN_KEYCHAIN=$KC" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=$(date -u +%Y%m%d%H%M)" >> "$GITHUB_ENV"
+      - name: Build the download (signed with the release certificate)
         run: VERSION="${GITHUB_REF_NAME#v}" scripts/package-release.sh
+      - name: Sign the update and write the feed
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: scripts/make-appcast.sh Recap "$GITHUB_REPOSITORY" "${GITHUB_REF_NAME#v}" "$BUILD_NUMBER" 26.0 build/Recap.zip
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" build/Recap.zip build/Recap.zip.sha256 --repo "$GITHUB_REPOSITORY" --title "Recap ${GITHUB_REF_NAME#v}" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" build/Recap.zip build/Recap.zip.sha256 build/appcast.xml --repo "$GITHUB_REPOSITORY" --title "Recap ${GITHUB_REF_NAME#v}" --generate-notes
+      - name: Remove the keychain
+        if: always()
+        run: '[ -n "${SIGN_KEYCHAIN:-}" ] && security delete-keychain "$SIGN_KEYCHAIN" || true'

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds the zip people download: a universal, ad-hoc signed app, plus its SHA-256.
+# Builds the zip people download: a universal app signed with SIGN_IDENTITY (ad-hoc without it), plus its SHA-256.
 #   VERSION=0.1.0 scripts/package-release.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Fails if the app gains a way to reach the network, the microphone or the camera, or any
-# entitlement beyond the sandbox, user-chosen files and app-scoped bookmarks.
+# entitlement beyond the sandbox, user-chosen files, app-scoped bookmarks and what Sparkle needs
+# for in-app updates. Only Sparkle's Downloader helper may use the network.
 # These back the privacy promise in the README and SECURITY.md.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -18,13 +19,31 @@ if [ "$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$ENT
     fail=1
 fi
 
-# Exactly these three keys, all true. Anything else (network, microphone, camera, wider file access) fails.
-ALLOWED="com.apple.security.app-sandbox com.apple.security.files.bookmarks.app-scope com.apple.security.files.user-selected.read-write"
-FOUND=$(plutil -convert json -o - "$ENT" | /usr/bin/python3 -c 'import json,sys; d=json.load(sys.stdin); print(" ".join(sorted(k for k,v in d.items() if v is True))); sys.exit(0 if all(v is True for v in d.values()) else 3)') || {
-    echo "Every entitlement must be a plain true value." >&2; fail=1; }
-if [ "$FOUND" != "$ALLOWED" ]; then
-    echo "Entitlements must be exactly: $ALLOWED" >&2
-    echo "Found: $FOUND" >&2
+# Sparkle (in-app updates) is used from one file only. Its own Downloader helper does the fetching.
+if grep -rln "import Sparkle" Sources/ | grep -v "^Sources/Recap/Updater.swift$"; then
+    echo "Sparkle may only be imported in Sources/Recap/Updater.swift." >&2
+    fail=1
+fi
+
+# Exactly these entitlements: the sandbox, user-chosen files and app-scoped bookmarks, plus what Sparkle
+# needs (loading its bundled framework, and the two local services -spks and -spki). Anything else
+# (network, microphone, camera, wider file access) fails.
+plutil -convert json -o - "$ENT" | /usr/bin/python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+want = {
+    "com.apple.security.app-sandbox": True,
+    "com.apple.security.files.user-selected.read-write": True,
+    "com.apple.security.files.bookmarks.app-scope": True,
+    "com.apple.security.cs.disable-library-validation": True,
+    "com.apple.security.temporary-exception.mach-lookup.global-name": ["__BUNDLE_ID__-spks", "__BUNDLE_ID__-spki"],
+}
+if d != want:
+    sys.exit("Entitlements must be exactly %r\nFound: %r" % (want, d))
+' || fail=1
+
+if grep -q "com.apple.security.network" "$ENT"; then
+    echo "The entitlements file grants network access." >&2
     fail=1
 fi
 

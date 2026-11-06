@@ -7,6 +7,8 @@ import Speech
 ///   Recap --transcribe <file> [--locale en_US] [--format txt|md|srt|vtt|json] [--cancel-after <seconds>]
 ///   Recap --smoke-test     exercise the core with no engine and no window
 ///   Recap --launch-check   start as the signed, sandboxed app would, check its folder and engine, quit
+///   Recap --update-check   packaged app only: read the update feed through Sparkle's Downloader helper, quit
+/// They all return before RecapApp starts, so the window and the updater never start in these modes.
 enum CommandLineModes {
     /// Returns an exit code when a mode ran, or nil to start the app normally.
     static func run(_ args: [String]) -> Int32? {
@@ -15,6 +17,7 @@ enum CommandLineModes {
             return MainActor.assumeIsolated { ScreenRenderer.run(folder: folder) }
         }
         if args.contains("--launch-check") { return blocking { await launchCheck() } }
+        if args.contains("--update-check") { return MainActor.assumeIsolated { UpdateCheck.run() } }
         if let i = args.firstIndex(of: "--transcribe") {
             guard args.indices.contains(i + 1) else { return fail("Give a file after --transcribe.") }
             let file = URL(fileURLWithPath: args[i + 1])

@@ -5,7 +5,7 @@
 A private Mac app that turns a recording into a searchable transcript, with a time on every line.
 Everything happens on your Mac. Nothing is uploaded.
 
-**[Download Recap for Mac](https://github.com/KevinPlanet9/recap/releases/latest/download/Recap.zip)** (macOS 26 or later)
+**[Download Recap for Mac](https://github.com/KevinPlanet9/recap/releases/latest/download/Recap.zip)** (macOS 26 or later) · [Web page](https://kevinplanet9.github.io/recap/)
 
 ![A transcript in Recap: search, Copy All, Export, and a time on every line](docs/transcript.png)
 
@@ -83,7 +83,14 @@ While it works you see the progress, the lines as they arrive, and how many file
 
 ## Updating
 
-Recap doesn't check for updates by itself (it has no network access). To update, download
+From version 0.2.0, Recap tells you when a new version is out, and one click installs it. Choose
+Recap > Check for Updates any time. The check is the only network use: Sparkle's separate Downloader
+helper fetches the update feed and the new version from GitHub, over https. The Recap app itself has
+no network access. Transcripts and recordings never leave your Mac and are never sent. Each update
+must carry a valid signature matching Recap's key (EdDSA), checked before it is unpacked. Turn off
+Check for Updates Automatically and no check starts unless you choose Check for Updates.
+
+Copies of 0.1.0 don't update themselves. To update one, download
 [Recap.zip](https://github.com/KevinPlanet9/recap/releases/latest/download/Recap.zip) again, quit
 Recap, and replace the old copy in Applications. Your saved transcripts stay where they are.
 

@@ -1,5 +1,35 @@
 # Build log
 
+## 2026-11-06: in-app updates (not yet released)
+
+- In-app updates with Sparkle 2.10.1 (pinned exactly), set up the same way as EyeCue: Recap > Check for
+  Updates... and a Check for Updates Automatically toggle after About Recap, and a check at launch when
+  automatic checks are on. The updater starts only in the packaged app, never in the command line modes.
+- The app itself still has no network entitlement. Only Sparkle's separate Downloader helper fetches the feed
+  (`releases/latest/download/appcast.xml`) and the update from GitHub, over https; transcripts and recordings
+  never leave the Mac. Every update must carry a valid EdDSA signature matching the key in `Info.plist`,
+  checked before it is unpacked.
+- Sparkle's helpers (Downloader, Installer, Updater) ship exactly as Sparkle ships them, with no extra
+  entitlements. The Installer runs outside the sandbox because it has to replace the app.
+- Entitlements are now exactly: the sandbox, user-chosen files, app-scoped bookmarks,
+  `cs.disable-library-validation` (to load the bundled framework without an Apple Team ID) and the
+  mach-lookup exception for Sparkle's `-spks` and `-spki` local services. `check-no-network.sh` and the
+  signed-app check in `build-app.sh` require exactly that, on every architecture, and that Sparkle's
+  helpers carry no entitlements, on every architecture.
+- Releases are signed with the release certificate from a throwaway keychain in CI, and publish
+  `appcast.xml` next to `Recap.zip`.
+- New check: `Recap --update-check` reads the feed with no window.
+- An independent review (Codex) of the updater found three medium and two low problems, all fixed: Sparkle's shared Downloader is no longer given its own sandbox (it could clash with other apps using Sparkle); the windowless update check no longer shows a menu bar icon or exits before its result; turning off automatic checks now refuses background checks outright; the build checks Sparkle's helpers carry no entitlements and the app's entitlements on every architecture; the release certificate import fails loudly and cleans up.
+
+Checked on this Mac, from the command line (no window):
+
+| Check | Result |
+| --- | --- |
+| `scripts/test.sh` | 25 tests passed, no-network check passed, smoke test passed |
+| Ad-hoc and signed builds | both built; signed entitlements checked (before the review fixes above) |
+| Signed app launch check | sandbox on, store in the container, engine available, 45 languages |
+| Signed app update check | Sparkle's Downloader reached GitHub, which answered 404 for the feed (no release has an appcast yet) |
+
 ## 2026-11-06: version 0.1.0
 
 First version, built from the plan "Transcription App Handoff".
