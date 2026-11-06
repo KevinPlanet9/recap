@@ -68,7 +68,6 @@ and the update from GitHub, over https; transcripts and recordings never leave t
 the Downloader its own sandbox: that needs a Sparkle build with an app-specific service id, or it can clash
 with other apps that use Sparkle. The Installer runs outside the sandbox because it has to replace the app.
 
-While the repository is private, that link works only for people signed in to GitHub with access to it.
 
 ## Check before every release
 - `scripts/test.sh` and `scripts/check-real-files.sh` pass.
