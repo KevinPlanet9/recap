@@ -1,5 +1,10 @@
 # Build log
 
+## 2026-11-06: version 0.2.1
+
+- The highlight on the line that is playing now spans the whole row, not just its text.
+- The first update delivered through the in-app updater.
+
 ## 2026-11-06: a video for the web page
 
 - A 69-second narrated video on the page (`site/assets/recap.mp4`), made the same way as EyeCue's: the app's real
