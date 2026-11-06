@@ -1,6 +1,6 @@
 # Build log
 
-## 2026-11-06: in-app updates (not yet released)
+## 2026-11-06: version 0.2.0, in-app updates (the first public release)
 
 - In-app updates with Sparkle 2.10.1 (pinned exactly), set up the same way as EyeCue: Recap > Check for
   Updates... and a Check for Updates Automatically toggle after About Recap, and a check at launch when
@@ -29,6 +29,10 @@ Checked on this Mac, from the command line (no window):
 | Ad-hoc and signed builds | both built; signed entitlements checked (before the review fixes above) |
 | Signed app launch check | sandbox on, store in the container, engine available, 45 languages |
 | Signed app update check | Sparkle's Downloader reached GitHub, which answered 404 for the feed (no release has an appcast yet) |
+
+The same signing setup as EyeCue 0.4.0, where a person confirmed that a second build signed with the same
+certificate opened without new permission prompts. Recap asks for no permissions (it reads files you choose), so
+updates just need the one click. 0.1.0 was never published; 0.2.0 is the first download.
 
 ## 2026-11-06: version 0.1.0
 
